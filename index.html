@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>For You, My Everything 🦋</title>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Caveat:wght@500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0; -webkit-tap-highlight-color: transparent;}
+:root{--dark:#050914; --gold:#ffd700; --paper:#fdf6e3; --rose:#ff6b8a;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--dark);font-family:'Playfair Display',serif;color:#fff;}
+
+/* ── GLOBAL LAYERS ── */
+#starCanvas, #petalCanvas {position:fixed;inset:0;pointer-events:none;z-index:1;}
+#petalCanvas {z-index:9000;}
+
+/* Clouds */
+.clouds{position:fixed;top:0;left:0;width:200%;height:30%;background:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="200" opacity="0.15"><path d="M100 100 Q150 50 200 100 T300 100 T400 100" fill="%23fff" filter="blur(20px)"/></svg>') repeat-x;animation:drift 60s linear infinite;pointer-events:none;z-index:2;}
+@keyframes drift{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* Ocean Waves */
+.ocean{position:absolute;bottom:0;left:0;width:100%;height:150px;overflow:hidden;z-index:5;}
+.wave{position:absolute;bottom:0;left:0;width:200%;height:100%;background:url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="%231a4a76" opacity="0.4"/></svg>') repeat-x;background-size:50% 100%;animation:waveMove 12s linear infinite;transform-origin:bottom;}
+.wave:nth-child(2){bottom:-10px;animation:waveMove 8s linear infinite reverse;opacity:0.6;}
+.wave:nth-child(3){bottom:-20px;background-image:url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg"><path d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" fill="%230d2a4a" opacity="0.8"/></svg>');animation-duration:15s;}
+@keyframes waveMove{0%{transform:translateX(0) scaleY(1);}50%{transform:translateX(-25%) scaleY(1.1);}100%{transform:translateX(-50%) scaleY(1);}}
+
+/* Butterflies */
+.butterfly{position:fixed;width:40px;height:40px;pointer-events:none;z-index:8999;animation:fly 12s linear forwards, flutter 0.2s infinite alternate;}
+.butterfly::before, .butterfly::after{content:'';position:absolute;top:0;width:50%;height:100%;background:radial-gradient(circle, #73c8ff, #b573ff);border-radius:50% 10% 50% 10%;box-shadow:0 0 15px #73c8ff;opacity:0.8;}
+.butterfly::before{left:0;transform-origin:right center;animation:wingL 0.15s infinite alternate;}
+.butterfly::after{right:0;transform-origin:left center;border-radius:10% 50% 10% 50%;animation:wingR 0.15s infinite alternate;}
+@keyframes fly{0%{transform:translate(-50px, 100vh) scale(0.5);opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{transform:translate(100vw, -100px) scale(1.5);opacity:0;}}
+@keyframes wingL{0%{transform:rotateY(0deg);}100%{transform:rotateY(60deg);}}
+@keyframes wingR{0%{transform:rotateY(0deg);}100%{transform:rotateY(-60deg);}}
+@keyframes flutter{0%{margin-top:0;}100%{margin-top:-15px;}}
+
+/* ── PAGE CONTROLLER ── */
+.page{position:fixed;inset:0;opacity:0;pointer-events:none;transition:opacity 1.2s ease, transform 1s ease;transform:scale(0.95);overflow-y:auto;overflow-x:hidden;z-index:10;padding-bottom:100px;}
+.page.active{opacity:1;pointer-events:all;transform:scale(1);}
+
+/* ── UI BUTTONS ── */
+.nav-btn{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg, #ff6b8a, #c2185b);color:#fff;padding:12px 35px;border-radius:30px;border:none;font-family:'Dancing Script',cursive;font-size:1.3rem;cursor:pointer;z-index:9990;opacity:0;pointer-events:none;transition:all 0.4s;box-shadow:0 0 20px rgba(255,107,138,0.6);}
+.nav-btn.show{opacity:1;pointer-events:all;}
+.nav-btn:hover{box-shadow:0 0 30px #ff6b8a; transform:translateX(-50%) scale(1.05);}
+.music-btn{position:fixed;top:15px;right:15px;width:45px;height:45px;border-radius:50%;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:1.2rem;display:flex;align-items:center;justify-content:center;z-index:9990;cursor:pointer;backdrop-filter:blur(5px);}
+
+/* ── PAGE 1: THE SPARK ── */
+#p1{display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at center, #1a0b2e, #050914);}
+.title-glow{font-family:'Dancing Script',cursive;font-size:3.5rem;color:#fff;text-shadow:0 0 20px #ff6b8a, 0 0 40px #b573ff;text-align:center;animation:pulseText 3s infinite alternate;padding:0 20px;z-index:20;}
+@keyframes pulseText{0%{transform:scale(0.95); text-shadow:0 0 10px #ff6b8a;}100%{transform:scale(1.05); text-shadow:0 0 30px #ff6b8a, 0 0 60px #b573ff;}}
+.p1-sub{font-style:italic;color:#ccc;margin-top:20px;font-size:1.1rem;z-index:20;}
+
+/* ── PAGE 2: THE SCRAPBOOK ── */
+#p2{background:url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23noiseFilter)" opacity="0.08"/></svg>'), linear-gradient(135deg, #2c1e16, #140d09);}
+.scrapbook-title{text-align:center;padding:40px 20px 10px;font-size:2.5rem;font-family:'Dancing Script',cursive;color:#fdf6e3;text-shadow:2px 2px 4px rgba(0,0,0,0.8);z-index:20;}
+.book-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:35px 20px;padding:20px;max-width:800px;margin:0 auto;}
+.sb-photo{width:140px;background:#fff;padding:8px 8px 30px 8px;box-shadow:5px 5px 20px rgba(0,0,0,0.6);border-radius:2px;position:relative;transform:rotate(calc(var(--r) * 1deg));transition:transform 0.4s, box-shadow 0.4s;cursor:pointer;z-index:5;}
+.sb-photo::before{content:'';position:absolute;top:-12px;left:50%;transform:translateX(-50%) rotate(-3deg);width:40px;height:15px;background:rgba(255,255,255,0.4);border:1px solid rgba(0,0,0,0.1);box-shadow:1px 1px 3px rgba(0,0,0,0.2);z-index:2;} /* Tape */
+.sb-photo img{width:100%;aspect-ratio:1;object-fit:cover;filter:sepia(0.1) contrast(1.1);}
+.sb-photo .caption{position:absolute;bottom:5px;left:0;width:100%;text-align:center;font-family:'Caveat',cursive;font-size:1.2rem;color:#333;}
+.sb-photo:hover{transform:scale(1.1) rotate(0deg) !important;box-shadow:0 15px 30px rgba(0,0,0,0.8);z-index:15;}
+
+/* ── PAGE 3: FLOATING PICTURE WALL ── */
+#p3{background:radial-gradient(ellipse at center, #1b0a2e, #050914);}
+.wall-title{text-align:center;padding:40px 20px;font-size:2rem;color:#e8d5ff;text-shadow:0 0 15px #b573ff;}
+.gallery-wall{position:relative;width:100%;height:70vh;display:flex;align-items:center;justify-content:center;}
+.float-frame{position:absolute;width:100px;height:120px;border:3px solid rgba(255,255,255,0.5);border-radius:8px;box-shadow:0 0 20px rgba(181,115,255,0.4);overflow:hidden;animation:antiGrav 8s ease-in-out infinite alternate;opacity:0.8;transition:all 0.5s;cursor:pointer;}
+.float-frame img{width:100%;height:100%;object-fit:cover;}
+.float-frame:hover{opacity:1;transform:scale(1.3) !important;box-shadow:0 0 40px #ff6b8a;z-index:20;}
+@keyframes antiGrav{0%{transform:translateY(15px) rotate(-3deg);}100%{transform:translateY(-15px) rotate(3deg);}}
+
+/* ── PAGE 4: LANTERN LAKE ── */
+#p4{background:linear-gradient(to bottom, #030613 0%, #1a1025 60%, #020b1c 100%); cursor:pointer;}
+.p4-hint{position:absolute;top:15%;width:100%;text-align:center;font-style:italic;color:rgba(255,255,255,0.6);font-size:1.2rem;pointer-events:none;z-index:2;animation:pulseText 3s infinite alternate;}
+.lake-surface{position:absolute;bottom:0;left:0;width:100%;height:40%;background:linear-gradient(to top, rgba(0,10,30,0.9), transparent);border-top:1px solid rgba(255,255,255,0.1);z-index:3;pointer-events:none;}
+.lantern{position:absolute;width:25px;height:38px;background:radial-gradient(ellipse at center, #ffecb3 0%, #ff9800 100%);border-radius:10px 10px 4px 4px;box-shadow:0 0 25px #ff9800, inset 0 -4px 8px rgba(0,0,0,0.3);z-index:2;animation:floatUp 12s ease-in forwards;}
+@keyframes floatUp{0%{opacity:0;transform:translateY(20px) scale(0.5);} 10%{opacity:1;transform:translateY(0) scale(1);} 100%{opacity:0;transform:translateY(-120vh) scale(0.7) rotate(10deg);}}
+
+/* ── PAGE 5: THE FIREWORK FINALE ── */
+#p5{background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;}
+#fireworkCanvas{position:absolute;inset:0;z-index:1;}
+.final-heart{position:relative;font-size:5rem;color:#ff6b8a;text-shadow:0 0 40px #ff6b8a, 0 0 80px #ffb6c1;animation:beat 1s infinite;z-index:10;margin-bottom:30px;cursor:pointer;}
+@keyframes beat{0%,100%{transform:scale(1);}50%{transform:scale(1.2);}}
+.love-letter{z-index:10;text-align:center;max-width:400px;padding:0 20px;}
+.love-letter h1{font-family:'Dancing Script',cursive;font-size:3rem;color:#fff;margin-bottom:15px;text-shadow:0 0 20px #ff6b8a;}
+.love-letter p{font-size:1.2rem;line-height:1.8;color:#eee;font-style:italic;}
+</style>
+</head>
+<body>
+
+<div class="clouds"></div>
+<canvas id="starCanvas"></canvas>
+<canvas id="petalCanvas"></canvas>
+<button class="music-btn" id="mbtn">🎵</button>
+<button class="nav-btn" id="nextBtn" onclick="nextPage()">Dive Deeper 🦋</button>
+
+<audio id="bgm" loop preload="auto">
+  <source src="https://files.catbox.moe/ol3k2r.mp3" type="audio/mpeg">
+</audio>
+
+<div class="page active" id="p1" onclick="tryPlay(); showNextBtn(100)">
+  <div class="title-glow">For You, My Everything</div>
+  <div class="p1-sub">Tap anywhere to begin our magic...</div>
+  <div class="ocean">
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+  </div>
+</div>
+
+<div class="page" id="p2">
+  <div class="scrapbook-title">Pages of Us</div>
+  <div class="book-grid" id="sbGrid"></div>
+</div>
+
+<div class="page" id="p3">
+  <div class="wall-title">A Universe of Memories</div>
+  <div class="gallery-wall" id="galWall"></div>
+</div>
+
+<div class="page" id="p4" onclick="createLantern(event)">
+  <div class="p4-hint">Tap the water to release a lantern of love</div>
+  <div class="lake-surface"></div>
+</div>
+
+<div class="page" id="p5">
+  <canvas id="fireworkCanvas"></canvas>
+  <div class="final-heart" onclick="burstFireworks(window.innerWidth/2, window.innerHeight/3)">❤</div>
+  <div class="love-letter">
+    <h1>I Love You</h1>
+    <p>More than the stars, more than the ocean, more than words can ever hold. You are my forever. 🦋</p>
+  </div>
+</div>
+
+<script>
+// --- IMAGE DATA ---
+const images = [
+  "https://i.ibb.co/mrcZ9pnN/IMG-9470.jpg", "https://i.ibb.co/nM2VTL6j/IMG-9471.jpg", 
+  "https://i.ibb.co/SXjJ3dbz/1275c2ac-3cf4-4c6c-977b-8b6c2c88dc01.jpg", "https://i.ibb.co/dsQ4vWGK/IMG-9464.jpg",
+  "https://i.ibb.co/0RXd50LZ/IMG-9463.jpg", "https://i.ibb.co/ZPXbCfM/IMG-9462.jpg",
+  "https://i.ibb.co/bM4ZV8kW/IMG-9461.jpg", "https://i.ibb.co/B2LQMSGg/IMG-9458.jpg",
+  "https://i.ibb.co/fYhyJpnc/IMG-9459.jpg", "https://i.ibb.co/rf5S7HwG/IMG-9457.jpg",
+  "https://i.ibb.co/QF6j6PHG/IMG-9278.jpg", "https://i.ibb.co/Pz3B5Lfd/IMG-9275.jpg",
+  "https://i.ibb.co/KzXMSgSf/IMG-9276.jpg", "https://i.ibb.co/mr6LhmcK/IMG-9277.jpg",
+  "https://i.ibb.co/YTb5zjJR/IMG-9272.jpg", "https://i.ibb.co/mFb7yZZT/IMG-9273.jpg",
+  "https://i.ibb.co/Rk1JSHBJ/IMG-9274.jpg", "https://i.ibb.co/8gGckn2Q/IMG-9270.jpg",
+  "https://i.ibb.co/q37B4Lr3/IMG-9263.jpg", "https://i.ibb.co/99rjFFgc/IMG-9466.jpg",
+  "https://i.ibb.co/vbr0mXQ/IMG-9467.jpg", "https://i.ibb.co/5x6sGF6T/IMG-9260.jpg"
+];
+function shuffle(a){ return [...a].sort(()=>Math.random()-0.5); }
+const imgPool = shuffle(images);
+let imgIdx = 0;
+function getImg(){ if(imgIdx>=imgPool.length) imgIdx=0; return imgPool[imgIdx++]; }
+
+// --- STATE & NAVIGATION ---
+let curPage = 1;
+const totalPages = 5;
+let musicOn = false;
+const bgm = document.getElementById('bgm');
+const mbtn = document.getElementById('mbtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function tryPlay(){
+  if(!musicOn){ bgm.play().then(()=>{ musicOn=true; mbtn.textContent='🎵'; }).catch(()=>{}); }
+}
+mbtn.addEventListener('click', ()=>{
+  if(musicOn){ bgm.pause(); musicOn=false; mbtn.textContent='🔇'; }
+  else { bgm.play(); musicOn=true; mbtn.textContent='🎵'; }
+});
+
+function showNextBtn(delay){ setTimeout(()=>nextBtn.classList.add('show'), delay); }
+function hideNextBtn(){ nextBtn.classList.remove('show'); }
+
+function nextPage(){
+  if(curPage >= totalPages) return;
+  hideNextBtn();
+  document.getElementById('p'+curPage).classList.remove('active');
+  curPage++;
+  document.getElementById('p'+curPage).classList.add('active');
+  document.getElementById('p'+curPage).scrollTo(0,0);
+  triggerPage(curPage);
+}
+
+// --- GLOBAL: BUTTERFLIES ---
+function spawnButterfly(){
+  if(Math.random() > 0.4) return; // 40% chance every interval
+  const b = document.createElement('div');
+  b.className = 'butterfly';
+  b.style.top = (Math.random() * 80) + 'vh';
+  b.style.animationDuration = (8 + Math.random()*6) + 's';
+  document.body.appendChild(b);
+  setTimeout(()=>b.remove(), 15000);
+}
+setInterval(spawnButterfly, 3000);
+
+// --- GLOBAL: STARS ---
+const sCanv = document.getElementById('starCanvas');
+const sCtx = sCanv.getContext('2d');
+let stars = [];
+function initStars(){
+  sCanv.width = window.innerWidth; sCanv.height = window.innerHeight;
+  stars = [];
+  for(let i=0; i<100; i++){
+    stars.push({ x: Math.random()*sCanv.width, y: Math.random()*sCanv.height, r: Math.random()*1.5, a: Math.random(), s: 0.01+Math.random()*0.02 });
+  }
+}
+function drawStars(){
+  sCtx.clearRect(0,0,sCanv.width,sCanv.height);
+  stars.forEach(st => {
+    st.a += st.s;
+    sCtx.beginPath(); sCtx.arc(st.x, st.y, st.r, 0, Math.PI*2);
+    sCtx.fillStyle = `rgba(255, 255, 255, ${Math.abs(Math.sin(st.a))})`;
+    sCtx.fill();
+  });
+  requestAnimationFrame(drawStars);
+}
+initStars(); drawStars();
+window.addEventListener('resize', initStars);
+
+// --- GLOBAL: PETALS ---
+const pCanv = document.getElementById('petalCanvas');
+const pCtx = pCanv.getContext('2d');
+let petals = [];
+function initPetals(){ pCanv.width = window.innerWidth; pCanv.height = window.innerHeight; }
+function createPetal(){
+  return { x: Math.random()*pCanv.width, y: -20, vx: (Math.random()-0.5)*2, vy: 1+Math.random()*2, r: Math.random()*360, rs: (Math.random()-0.5)*5, s: 4+Math.random()*6 };
+}
+function drawPetals(){
+  pCtx.clearRect(0,0,pCanv.width,pCanv.height);
+  if(Math.random()<0.05 && petals.length<35) petals.push(createPetal());
+  petals = petals.filter(p => {
+    p.x += p.vx + Math.sin(p.y/50)*0.5; p.y += p.vy; p.r += p.rs;
+    if(p.y > pCanv.height+30) return false;
+    pCtx.save(); pCtx.translate(p.x, p.y); pCtx.rotate(p.r*Math.PI/180);
+    pCtx.fillStyle = 'rgba(255, 107, 138, 0.7)';
+    pCtx.beginPath(); pCtx.ellipse(0,0, p.s, p.s*2, 0, 0, Math.PI*2); pCtx.fill();
+    pCtx.restore();
+    return true;
+  });
+  requestAnimationFrame(drawPetals);
+}
+initPetals(); drawPetals();
+window.addEventListener('resize', initPetals);
+
+// --- PAGE 2: SCRAPBOOK BUILDER ---
+const captions = ["My Heart", "Perfect", "Us", "Forever", "Smiles", "Magic"];
+function buildScrapbook(){
+  const grid = document.getElementById('sbGrid');
+  if(grid.children.length > 0) return;
+  for(let i=0; i<8; i++){
+    const d = document.createElement('div');
+    d.className = 'sb-photo';
+    d.style.setProperty('--r', (Math.random()-0.5)*15);
+    d.innerHTML = `<img src="${getImg()}"><div class="caption">${captions[i%captions.length]}</div>`;
+    grid.appendChild(d);
+  }
+}
+
+// --- PAGE 3: GALLERY WALL ---
+function buildWall(){
+  const wall = document.getElementById('galWall');
+  if(wall.children.length > 0) return;
+  for(let i=0; i<6; i++){
+    const f = document.createElement('div');
+    f.className = 'float-frame';
+    f.style.left = (10 + Math.random()*60) + '%';
+    f.style.top = (10 + Math.random()*60) + '%';
+    f.style.animationDelay = '-' + (Math.random()*5) + 's';
+    f.innerHTML = `<img src="${getImg()}">`;
+    wall.appendChild(f);
+  }
+}
+
+// --- PAGE 4: LANTERNS ---
+function createLantern(e){
+  const l = document.createElement('div');
+  l.className = 'lantern';
+  l.style.left = (e.clientX - 12) + 'px';
+  l.style.top = (e.clientY - 19) + 'px';
+  document.getElementById('p4').appendChild(l);
+  setTimeout(()=>l.remove(), 12000);
+}
+
+// --- PAGE 5: FIREWORKS ---
+const fCanv = document.getElementById('fireworkCanvas');
+const fCtx = fCanv.getContext('2d');
+let particles = [];
+function resizeF(){ fCanv.width = window.innerWidth; fCanv.height = window.innerHeight; }
+resizeF(); window.addEventListener('resize', resizeF);
+
+function burstFireworks(x, y){
+  for(let i=0; i<80; i++){
+    particles.push({
+      x: x, y: y,
+      vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15,
+      alpha: 1, c: Math.random()>0.5 ? '#ff6b8a' : '#b573ff'
+    });
+  }
+}
+function animFireworks(){
+  fCtx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+  fCtx.fillRect(0,0,fCanv.width,fCanv.height);
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.15; p.alpha -= 0.015;
+    fCtx.beginPath(); fCtx.arc(p.x, p.y, 2.5, 0, Math.PI*2);
+    fCtx.fillStyle = p.c; fCtx.globalAlpha = Math.max(0, p.alpha); fCtx.fill();
+  });
+  fCtx.globalAlpha = 1;
+  particles = particles.filter(p => p.alpha > 0);
+  requestAnimationFrame(animFireworks);
+}
+animFireworks();
+setInterval(()=> { if(curPage===5 && Math.random()<0.4) burstFireworks(Math.random()*fCanv.width, Math.random()*(fCanv.height/2)); }, 1500);
+
+// --- PAGE LOGIC ---
+function triggerPage(page){
+  if(page === 2){ buildScrapbook(); showNextBtn(3000); }
+  if(page === 3){ buildWall(); showNextBtn(3000); }
+  if(page === 4){ showNextBtn(4000); }
+}
+</script>
+</body>
+</html>
